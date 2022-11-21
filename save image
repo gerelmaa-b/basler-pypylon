@@ -1,0 +1,37 @@
+#Code inspiration from: https://github.com/basler/pypylon/blob/master/samples/save_image.py
+
+from pypylon import pylon
+import platform
+import cv2
+
+count = 0
+#path_root = 'C:\\Users'
+img = pylon.PylonImage()
+tlf = pylon.TlFactory.GetInstance()
+
+cam = pylon.InstantCamera(tlf.CreateFirstDevice())
+cam.Open()
+cam.StartGrabbing()
+ 
+while True:
+    with cam.RetrieveResult(2000) as result:
+
+        # Calling AttachGrabResultBuffer creates another reference to the
+        # grab result buffer. This prevents the buffer's reuse for grabbing.
+        img.AttachGrabResultBuffer(result)
+        key = cv2.waitKey() & 0xFF
+        if platform.system() == 'Windows' and key == ord('s'): # press s to safe:
+            filename = "saved_pypylon_img_%d.png" % count
+            img.Save(pylon.ImageFileFormat_Png, filename)
+            print('png image saved')
+            count += 1
+        if key == ord('q'):   
+            break
+            
+        
+        # In order to make it possible to reuse the grab result for grabbing
+        # again, we have to release the image (effectively emptying the
+        # image object).
+        img.Release()
+cam.StopGrabbing()
+cam.Close()
